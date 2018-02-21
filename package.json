@@ -1,0 +1,23 @@
+{
+  "name": "auto-random-group-maker",
+  "version": "0.0.0",
+  "description": "static vue app for grouping students in random groups, with as little repeat coupling.",
+  "main": "index.js",
+  "scripts": {
+    "start": "json-server --watch db.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JHStoops/AutoRandomGroupMaker.git"
+  },
+  "author": "CS4690",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JHStoops/AutoRandomGroupMaker/issues"
+  },
+  "homepage": "https://github.com/JHStoops/AutoRandomGroupMaker#readme",
+  "devDependencies": {
+    "json-server": "^0.12.1"
+  }
+}

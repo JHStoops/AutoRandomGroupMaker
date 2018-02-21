@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Random Group Maker</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.17.1/axios.min.js"></script>
+</head>
+
+<body>
+  <div class="container" id="app">
+    <div class="row">
+      <div class="col-xl-6 offset-xl-3">
+
+
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* global Vue */
+    /* global axios */
+    let app = new Vue({
+      el: '#app',
+      data: {
+        students: [],
+        previousGroups: []
+      },
+      methods: {
+        removeRule: function(i) {
+        this.rules.splice(i,1);
+        }
+      },
+      created: function(){
+      let self = this;    //closure - captures the scope of all the variables of 'this' which is the 'created' function.
+
+      //Grab Lab1 info
+      axios.get('http://localhost:3000/assignments/Lab1')
+      .then(function(res){
+      console.log(res.data);
+      self.assignmentName = res.data.id;
+      self.totalPts = res.data.totalPts;
+      self.rules = res.data.rules;
+      })
+      .catch(function(err){
+      console.log(err);
+    });
+
+    //Grab students for grading
+    axios.get('http://localhost:3000/students')
+    .then(function(res){
+    console.log(res.data);
+    self.students = res.data;
+    })
+    .catch(function(err){
+    console.log(err);
+    });
+    }
+    });
+  </script>
+</body>
+
+</html>
