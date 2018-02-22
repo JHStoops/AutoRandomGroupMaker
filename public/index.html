@@ -2,64 +2,106 @@
 <html>
 
 <head>
-  <meta charset="UTF-8">
-  <title>Auto Random Group Maker</title>
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.17.1/axios.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Auto Random Group Maker</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.17.1/axios.min.js"></script>
 </head>
 
 <body>
-  <div class="container" id="app">
-    <div class="row">
-      <div class="col-xl-6 offset-xl-3">
+    <div id="app">
+        <div class="row">
+            <div class="col-xs-8 offset-xl-2">
+                <!-- Create a random group -->
+                <button @click="createRandomGroup()">Create Random Group</button>
+                <br><br>
 
+                <!-- Current Group -->
+                <h2>Current Groups</h2>
+                <div class="row">
+                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone = currentMilestone">
+                        <div class="card-block">
+                            <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
+                            <h6 class="card-subtitle">Members:</h6>
+                            <p class="card-text" v-for="member of group.members">{{  uvidToName(member) }}</p>
+                        </div>
+                    </div>
+                </div>
+                <br>
 
-
-      </div>
+                <!-- Previous Groups -->
+                <h2>Previous Groups</h2>
+                <div class="row">
+                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone > currentMilestone">
+                        <div class="card-block">
+                            <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
+                            <h6 class="card-subtitle">Members:</h6>
+                            <p class="card-text" v-for="member of group.members">{{  uvidToName(member) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    /* global Vue */
-    /* global axios */
-    let app = new Vue({
-      el: '#app',
-      data: {
-        students: [],
-        previousGroups: []
-      },
-      methods: {
-        removeRule: function(i) {
-        this.rules.splice(i,1);
-        }
-      },
-      created: function(){
-      let self = this;    //closure - captures the scope of all the variables of 'this' which is the 'created' function.
+    <script>
+        /* global Vue */
+        /* global axios */
+        let app = new Vue({
+            el: '#app',
+            data: {
+                students: new Map(),
+                previousGroups: [],
+                currentMilestone: null
+            },
+            methods: {
+                uvidToName: function(UVID){
+                    return this.students.get(String(UVID));
+                },
+                createRandomGroup: function(){
+                    this.currentMilestone = 666;
+                    axios.post('http://localhost:3000/previousGroups', {"id": "abc", "milestone": 1,
+                        "members": [
+                            6,
+                            7
+                        ]})
+                        .then(function(res){
+                            console.log(res);
+                        })
+                        .catch(function(err){
+                            console.log(err);
+                        });
 
-      //Grab Lab1 info
-      axios.get('http://localhost:3000/assignments/Lab1')
-      .then(function(res){
-      console.log(res.data);
-      self.assignmentName = res.data.id;
-      self.totalPts = res.data.totalPts;
-      self.rules = res.data.rules;
-      })
-      .catch(function(err){
-      console.log(err);
-    });
 
-    //Grab students for grading
-    axios.get('http://localhost:3000/students')
-    .then(function(res){
-    console.log(res.data);
-    self.students = res.data;
-    })
-    .catch(function(err){
-    console.log(err);
-    });
-    }
-    });
-  </script>
+                }
+            },
+            created: function(){
+                let self = this;    //closure - captures the scope of all the variables of 'this' which is the 'created' function.
+
+                //Grab Students
+                axios.get('http://localhost:3000/students')
+                    .then(function(res){
+                        res.data.forEach((student) => self.students.set(student.UVID, student.name));
+                    })
+                    .catch(function(err){
+                        console.log(err);
+                    });
+
+                //Grab previous groups
+                axios.get('http://localhost:3000/previousGroups')
+                    .then(function(res){
+                        self.previousGroups = res.data;
+                        self.previousGroups.forEach(function(x){
+                            if (self.currentMilestone === null || self.currentMilestone < x.milestone) self.currentMilestone = x.milestone;
+                        });
+                    })
+                    .catch(function(err){
+                        console.log(err);
+                    });
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -71,34 +71,51 @@
   ],
   "previousGroups": [
     {
-      "date": 1518393600000,
       "milestone": 1,
-      "members": [1, 2, 3]
+      "members": [
+        1,
+        2,
+        3
+      ]
     },
     {
-      "date": 1518393600000,
       "milestone": 1,
-      "members": [10, 11, 12]
+      "members": [
+        10,
+        11,
+        12
+      ]
     },
     {
-      "date": 1518393600000,
       "milestone": 1,
-      "members": [8, 5, 17]
+      "members": [
+        8,
+        5,
+        17
+      ]
     },
     {
-      "date": 1518393600000,
       "milestone": 1,
-      "members": [4, 16, 15]
+      "members": [
+        4,
+        16,
+        15
+      ]
     },
     {
-      "date": 1518393600000,
       "milestone": 1,
-      "members": [14, 13, 9]
+      "members": [
+        14,
+        13,
+        9
+      ]
     },
     {
-      "date": 1518393600000,
       "milestone": 1,
-      "members": [6, 7]
+      "members": [
+        6,
+        7
+      ]
     }
   ]
 }
