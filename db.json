@@ -71,6 +71,7 @@
   ],
   "previousGroups": [
     {
+      "id": "1",
       "milestone": 1,
       "members": [
         1,
@@ -79,6 +80,7 @@
       ]
     },
     {
+      "id": "2",
       "milestone": 1,
       "members": [
         10,
@@ -87,6 +89,7 @@
       ]
     },
     {
+      "id": "3",
       "milestone": 1,
       "members": [
         8,
@@ -95,6 +98,7 @@
       ]
     },
     {
+      "id": "4",
       "milestone": 1,
       "members": [
         4,
@@ -103,6 +107,7 @@
       ]
     },
     {
+      "id": "5",
       "milestone": 1,
       "members": [
         14,
@@ -111,6 +116,7 @@
       ]
     },
     {
+      "id": "6",
       "milestone": 1,
       "members": [
         6,

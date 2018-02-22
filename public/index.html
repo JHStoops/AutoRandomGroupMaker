@@ -14,7 +14,7 @@
         <div class="row">
             <div class="col-xs-8 offset-xl-2">
                 <!-- Create a random group -->
-                <button @click="createRandomGroup()">Create Random Group</button>
+                <button @click="createRandomGroup(3)">Create Random Group</button>
                 <br><br>
 
                 <!-- Current Group -->
@@ -53,27 +53,58 @@
             data: {
                 students: new Map(),
                 previousGroups: [],
+                newGroups: [],
                 currentMilestone: null
             },
             methods: {
                 uvidToName: function(UVID){
                     return this.students.get(String(UVID));
                 },
-                createRandomGroup: function(){
-                    this.currentMilestone = 666;
-                    axios.post('http://localhost:3000/previousGroups', {"id": "abc", "milestone": 1,
-                        "members": [
-                            6,
-                            7
-                        ]})
-                        .then(function(res){
-                            console.log(res);
-                        })
-                        .catch(function(err){
-                            console.log(err);
+                createRandomGroup: function(groupSize){
+                    this.currentMilestone++;
+                    let milestone = {};
+                    milestone.milestone = this.currentMilestone;
+                    let studs = Array.from(this.students).map((stud) => Number(stud[0])); //Array of UVIDs
+                    let stud = null;
+
+                    //pull a student out of this map when placing them in groups
+                    while (studs.length > 0) {
+                        //take first available student in Map container
+                        stud = (studs.splice(0, 1))[0];
+                        milestone.members = [];
+                        milestone.members.push(stud);
+
+                        //Create a map container of classmates and amount of times in group with them.
+                        let previousStuds = [];
+                        app.previousGroups.forEach(function (group) {
+                            if (group.members.includes(stud)) {
+                                group.members.forEach(function (mem) {
+                                    previousStuds.push(mem)
+                                })
+                            }
                         });
 
+                        //Group with randomized selection from remaining students IFF they haven't been grouped together.
+                        for (let i = groupSize; i > 1;) {
+                            if (studs.length === 0) break;
+                            let randomIndex = Math.floor(Math.random() * studs.length);
 
+                            //Check if stud has already been in the same group as potentialStud
+                            if (previousStuds.includes(studs[randomIndex])) continue;
+                            i--;
+                            milestone.members.push((studs.splice(randomIndex, 1))[0]);
+                        }
+
+                        //Post group to the database
+                        //TODO leave the groups as temporary data, until user confirms groups to be committed to the DB.
+                        //TODO when creating a new set of groups, make the GUI update the new groups.
+                        axios.post('http://localhost:3000/previousGroups', {
+                                "milestone": this.currentMilestone,
+                                "members": milestone.members.slice(0, milestone.members.length)
+                            })
+                            .then(function(res){    console.log(res); })
+                            .catch(function(err){   console.log(err); });
+                    }
                 }
             },
             created: function(){
