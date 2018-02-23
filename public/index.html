@@ -17,10 +17,26 @@
                 <button @click="createRandomGroup(3)">Create Random Group</button>
                 <br><br>
 
+                <!-- New Groups -->
+                <div v-if="newGroups.length > 0">
+                    <h2>New Groups</h2>
+                    <div class="row">
+                        <div class="card col-3" v-for="group of newGroups">
+                            <div class="card-block">
+                                <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
+                                <h6 class="card-subtitle">Members:</h6>
+                                <p class="card-text" v-for="member of group.members">{{  uvidToName(member) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="confirmNewGroups()">Confirm New Groups</button>
+                    <br>
+                </div>
+
                 <!-- Current Group -->
                 <h2>Current Groups</h2>
                 <div class="row">
-                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone = currentMilestone">
+                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone == currentMilestone">
                         <div class="card-block">
                             <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
                             <h6 class="card-subtitle">Members:</h6>
@@ -33,7 +49,7 @@
                 <!-- Previous Groups -->
                 <h2>Previous Groups</h2>
                 <div class="row">
-                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone > currentMilestone">
+                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone < currentMilestone">
                         <div class="card-block">
                             <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
                             <h6 class="card-subtitle">Members:</h6>
@@ -60,19 +76,35 @@
                 uvidToName: function(UVID){
                     return this.students.get(String(UVID));
                 },
+                confirmNewGroups: function(){
+                    //Post groups to the database
+                    for (group of this.newGroups){
+                        axios.post('http://localhost:3000/previousGroups', {
+                            "milestone": group.milestone,
+                            "members": group.members
+                        })
+                            .then(function(res){    console.log(res); })
+                            .catch(function(err){   console.log(err); });
+                    }
+
+                    //move groups from newGroups into previousGroups and clear out newGroups
+                    this.previousGroups = this.previousGroups.concat(this.newGroups);
+                    this.currentMilestone = this.newGroups[0].milestone;
+                    this.newGroups = [];
+                },
                 createRandomGroup: function(groupSize){
-                    this.currentMilestone++;
-                    let milestone = {};
-                    milestone.milestone = this.currentMilestone;
+                    //FIXME Don't hardcode the groupSize -- use select/options elements.
+                    let newGroup = {};
+                    newGroup.milestone = this.currentMilestone + 1;
+                    newGroup.members = [];
                     let studs = Array.from(this.students).map((stud) => Number(stud[0])); //Array of UVIDs
                     let stud = null;
 
                     //pull a student out of this map when placing them in groups
                     while (studs.length > 0) {
-                        //take first available student in Map container
-                        stud = (studs.splice(0, 1))[0];
-                        milestone.members = [];
-                        milestone.members.push(stud);
+                        //take random student from array
+                        stud = (studs.splice(Math.floor(Math.random() * studs.length), 1))[0];
+                        newGroup.members.push(stud);
 
                         //Create a map container of classmates and amount of times in group with them.
                         let previousStuds = [];
@@ -85,6 +117,9 @@
                         });
 
                         //Group with randomized selection from remaining students IFF they haven't been grouped together.
+                        //FIXME runs in eternal loop if the last few students have been in the same group before.
+                        //TODO put in logic to determine special group sizes based on groupSize and remaining students, e.g. groupSize=3, remaining students=4
+                        //TODO introduce logic to group students together if they've been in groups with all remaining students.
                         for (let i = groupSize; i > 1;) {
                             if (studs.length === 0) break;
                             let randomIndex = Math.floor(Math.random() * studs.length);
@@ -92,18 +127,12 @@
                             //Check if stud has already been in the same group as potentialStud
                             if (previousStuds.includes(studs[randomIndex])) continue;
                             i--;
-                            milestone.members.push((studs.splice(randomIndex, 1))[0]);
+                            newGroup.members.push((studs.splice(randomIndex, 1))[0]);
                         }
 
-                        //Post group to the database
-                        //TODO leave the groups as temporary data, until user confirms groups to be committed to the DB.
-                        //TODO when creating a new set of groups, make the GUI update the new groups.
-                        axios.post('http://localhost:3000/previousGroups', {
-                                "milestone": this.currentMilestone,
-                                "members": milestone.members.slice(0, milestone.members.length)
-                            })
-                            .then(function(res){    console.log(res); })
-                            .catch(function(err){   console.log(err); });
+                        //Save new group to the suggestedGroups array
+                        this.newGroups.push(Object.assign({}, newGroup));   // Push a hard copy
+                        newGroup.members = [];
                     }
                 }
             },
