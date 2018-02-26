@@ -14,7 +14,7 @@
         <div class="row">
             <div class="col-xs-8 offset-xl-2">
                 <!-- Create a random group -->
-                <button @click="createRandomGroup(3)">Create Random Group</button>
+                <button @click="createRandomGroups(3)">Create Random Group</button>
                 <br><br>
 
                 <!-- New Groups -->
@@ -73,67 +73,99 @@
                 currentMilestone: null
             },
             methods: {
-                uvidToName: function(UVID){
-                    return this.students.get(String(UVID));
+                uvidToName: function (UVID) {
+                    return this.students.get(String(UVID)).name;
                 },
-                confirmNewGroups: function(){
+                indexOfElementUVID: function (arr, search) {
+                    for (let i = 0; i < arr.length; i++) {
+                        if (arr[i].UVID === search) return i;
+                    }
+                    return null;
+                },
+                createRandomGroups: function (groupSize) {
+                    this.newGroups = [];
+                    let newGroup = {
+                        "milestone": this.currentMilestone + 1,
+                        "members": []
+                    };
+                    let students = Array.from(this.students).map((stud) => Number(stud[0])
+                )
+                    ; //Array of UVIDs
+
+                    //pull a students out of map when placing them in groups
+                    while (students.length > 0) {
+                        //choose random student from array
+                        let student = (students.splice(Math.floor(Math.random() * students.length), 1))[0];
+                        newGroup.members.push(student);
+
+                        // Fill group with other students
+                        for (let i = newGroup.members.length; i < groupSize; i++) {
+                            if (students.length === 0) break;
+                            this.addStudentToGroup(students, newGroup.members);
+                        }
+
+                        //Save new group to the newGroups array
+                        this.newGroups.push(Object.assign({}, newGroup));   // Push a hard copy
+                        newGroup.members = [];
+                    }
+                },
+                addStudentToGroup: function (availableStudents, members) {
+                    // Add student to the group that none of the current group members have been in a group with
+                    // This method mutates availableStudents -- it removes selected elements from that array
+                    // This method mutates newGroup -- it adds the selected elements from availableStudents
+
+                    // Find all students that have been in group with students of the members array
+                    let previousMembers = [];
+                    for (member of members) {
+                        app.previousGroups.forEach(function (group) {
+                            // If they've been in the same group before
+                            if (group.members.includes(member)) {
+                                group.members.forEach(function (mem) {
+                                    if (availableStudents.includes(mem)) {
+                                        //If already added to previousMembers, simply increment collaborated element
+                                        let index = app.indexOfElementUVID(previousMembers, mem);
+                                        if (index != null) previousMembers[index].collaborated++;
+                                        else previousMembers.push({"UVID": mem, "collaborated": 1});
+                                    }
+                                })
+                            }
+                        });
+                    }
+
+                    //Detect if there is a remaining student that hasn't been in group.
+                    if (previousMembers.length < availableStudents.length) {
+                        // Add first student that hasn't been in a group with the students in members array
+                        let randomIndex = Math.floor(Math.random() * availableStudents.length);
+                        if (this.indexOfElementUVID(previousMembers.map(el => el.UVID), randomIndex) === null) {
+                            members.push((availableStudents.splice(randomIndex, 1))[0]);
+                        }
+                    }
+                    else {
+                        //TODO Allow lowest count of collaborations from previousMembers array
+                        console.log("It went here!");
+                        let randomIndex = Math.floor(Math.random() * availableStudents.length);
+                        members.push((availableStudents.splice(randomIndex, 1))[0]);
+                    }
+                },
+                confirmNewGroups: function () {
                     //Post groups to the database
-                    for (group of this.newGroups){
+                    for (group of this.newGroups) {
                         axios.post('http://localhost:3000/previousGroups', {
                             "milestone": group.milestone,
                             "members": group.members
                         })
-                            .then(function(res){    console.log(res); })
-                            .catch(function(err){   console.log(err); });
+                            .then(function (res) {
+                                console.log(res);
+                            })
+                            .catch(function (err) {
+                                console.log(err);
+                            });
                     }
 
                     //move groups from newGroups into previousGroups and clear out newGroups
                     this.previousGroups = this.previousGroups.concat(this.newGroups);
                     this.currentMilestone = this.newGroups[0].milestone;
                     this.newGroups = [];
-                },
-                createRandomGroup: function(groupSize){
-                    //FIXME Don't hardcode the groupSize -- use select/options elements.
-                    let newGroup = {};
-                    newGroup.milestone = this.currentMilestone + 1;
-                    newGroup.members = [];
-                    let studs = Array.from(this.students).map((stud) => Number(stud[0])); //Array of UVIDs
-                    let stud = null;
-
-                    //pull a student out of this map when placing them in groups
-                    while (studs.length > 0) {
-                        //take random student from array
-                        stud = (studs.splice(Math.floor(Math.random() * studs.length), 1))[0];
-                        newGroup.members.push(stud);
-
-                        //Create a map container of classmates and amount of times in group with them.
-                        let previousStuds = [];
-                        app.previousGroups.forEach(function (group) {
-                            if (group.members.includes(stud)) {
-                                group.members.forEach(function (mem) {
-                                    previousStuds.push(mem)
-                                })
-                            }
-                        });
-
-                        //Group with randomized selection from remaining students IFF they haven't been grouped together.
-                        //FIXME runs in eternal loop if the last few students have been in the same group before.
-                        //TODO put in logic to determine special group sizes based on groupSize and remaining students, e.g. groupSize=3, remaining students=4
-                        //TODO introduce logic to group students together if they've been in groups with all remaining students.
-                        for (let i = groupSize; i > 1;) {
-                            if (studs.length === 0) break;
-                            let randomIndex = Math.floor(Math.random() * studs.length);
-
-                            //Check if stud has already been in the same group as potentialStud
-                            if (previousStuds.includes(studs[randomIndex])) continue;
-                            i--;
-                            newGroup.members.push((studs.splice(randomIndex, 1))[0]);
-                        }
-
-                        //Save new group to the suggestedGroups array
-                        this.newGroups.push(Object.assign({}, newGroup));   // Push a hard copy
-                        newGroup.members = [];
-                    }
                 }
             },
             created: function(){
@@ -142,7 +174,7 @@
                 //Grab Students
                 axios.get('http://localhost:3000/students')
                     .then(function(res){
-                        res.data.forEach((student) => self.students.set(student.UVID, student.name));
+                        res.data.forEach((student) => self.students.set(student.UVID, {"name": student.name}));
                     })
                     .catch(function(err){
                         console.log(err);
