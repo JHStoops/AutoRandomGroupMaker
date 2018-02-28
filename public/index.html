@@ -14,7 +14,19 @@
         <div class="row">
             <div class="col-xs-8 offset-xl-2">
                 <!-- Create a random group -->
-                <button @click="createRandomGroups(3)">Create Random Group</button>
+                <h1>Generate New Groups</h1>
+                Group size:
+                <select v-model="selectedGroupSize">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                </select><br>
+                <button @click="createRandomGroups(selectedGroupSize)">Generate</button>
                 <br><br>
 
                 <!-- New Groups -->
@@ -70,13 +82,14 @@
                 students: new Map(),
                 previousGroups: [],
                 newGroups: [],
-                currentMilestone: null
+                currentMilestone: null,
+                selectedGroupSize: 3
             },
             methods: {
                 uvidToName: function (UVID) {
                     return this.students.get(String(UVID)).name;
                 },
-                indexOfElementUVID: function (arr, search) {
+                searchIndexOfElement: function (arr, search) {
                     for (let i = 0; i < arr.length; i++) {
                         if (arr[i].UVID === search) return i;
                     }
@@ -123,7 +136,7 @@
                                 group.members.forEach(function (mem) {
                                     if (availableStudents.includes(mem)) {
                                         //If already added to previousMembers, simply increment collaborated element
-                                        let index = app.indexOfElementUVID(previousMembers, mem);
+                                        let index = app.searchIndexOfElement(previousMembers, mem);
                                         if (index != null) previousMembers[index].collaborated++;
                                         else previousMembers.push({"UVID": mem, "collaborated": 1});
                                     }
@@ -136,15 +149,34 @@
                     if (previousMembers.length < availableStudents.length) {
                         // Add first student that hasn't been in a group with the students in members array
                         let randomIndex = Math.floor(Math.random() * availableStudents.length);
-                        if (this.indexOfElementUVID(previousMembers.map(el => el.UVID), randomIndex) === null) {
+                        if (this.searchIndexOfElement(previousMembers.map(el => el.UVID), randomIndex) === null) {
                             members.push((availableStudents.splice(randomIndex, 1))[0]);
                         }
                     }
                     else {
-                        //TODO Allow lowest count of collaborations from previousMembers array
-                        console.log("It went here!");
-                        let randomIndex = Math.floor(Math.random() * availableStudents.length);
-                        members.push((availableStudents.splice(randomIndex, 1))[0]);
+                        console.log("Duplicate warning!");
+                        //Determine lowest amount of collaborations
+                        let lowestCountOfCollaborations = null;
+                        previousMembers.forEach(function(el){
+                            if (el.collaborated < lowestCountOfCollaborations || lowestCountOfCollaborations === null) {
+                                lowestCountOfCollaborations = el.collaborated;
+                            }
+                        });
+
+                        //loop until we have selected an available student that matches lowestCountOfCollaborations
+                        while (true){
+                            let randomIndex = Math.floor(Math.random() * availableStudents.length);
+
+                            //Save student info to check amount of collaborations before adding to group
+                            let stud = availableStudents[randomIndex];
+                            let mem = previousMembers.find((mem) => mem.UVID === stud);
+
+                            //Add randomly selected student to group if collaboration count matches the lowest count
+                            if (mem.collaborated === lowestCountOfCollaborations) {
+                                members.push((availableStudents.splice(randomIndex, 1))[0]);
+                                break;
+                            }
+                        }
                     }
                 },
                 confirmNewGroups: function () {
