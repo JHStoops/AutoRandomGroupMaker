@@ -12,7 +12,7 @@
 <body>
     <div id="app">
         <div class="row">
-            <div class="col-xs-8 offset-xl-2">
+            <div class="col-6 offset-3">
                 <!-- Create a random group -->
                 <h1>Generate New Groups</h1>
                 Group size:
@@ -33,7 +33,7 @@
                 <div v-if="newGroups.length > 0">
                     <h2>New Groups</h2>
                     <div class="row">
-                        <div class="card col-3" v-for="group of newGroups">
+                        <div class="card col-12 col-sm-6 col-md-4" v-for="group of newGroups">
                             <div class="card-block">
                                 <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
                                 <h6 class="card-subtitle">Members:</h6>
@@ -48,7 +48,7 @@
                 <!-- Current Group -->
                 <h2>Current Groups</h2>
                 <div class="row">
-                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone == currentMilestone">
+                    <div class="card col-12 col-sm-6 col-md-4" v-for="group of previousGroups" v-if="group.milestone == currentMilestone">
                         <div class="card-block">
                             <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
                             <h6 class="card-subtitle">Members:</h6>
@@ -61,7 +61,7 @@
                 <!-- Previous Groups -->
                 <h2>Previous Groups</h2>
                 <div class="row">
-                    <div class="card col-3" v-for="group of previousGroups" v-if="group.milestone < currentMilestone">
+                    <div class="card col-12 col-sm-6 col-md-4" v-for="group of previousGroups" v-if="group.milestone < currentMilestone">
                         <div class="card-block">
                             <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
                             <h6 class="card-subtitle">Members:</h6>
@@ -69,6 +69,8 @@
                         </div>
                     </div>
                 </div>
+
+                <studentcard title="hello!" :groups="previousGroups" :milestone="currentMilestone" :uvidtoname="uvidToName"></studentcard>
             </div>
         </div>
     </div>
@@ -101,9 +103,7 @@
                         "milestone": this.currentMilestone + 1,
                         "members": []
                     };
-                    let students = Array.from(this.students).map((stud) => Number(stud[0])
-                )
-                    ; //Array of UVIDs
+                    let students = Array.from(this.students).map((stud) => Number(stud[0])); //Array of UVIDs
 
                     //pull a students out of map when placing them in groups
                     while (students.length > 0) {
@@ -224,6 +224,24 @@
                         console.log(err);
                     });
             }
+        });
+
+        Vue.component('studentcard', {
+            props: ['title', 'groups', 'milestone', 'uvidtoname'],
+            created: function(){console.log(this.uvidtoname(1))},
+            template: `
+                <span>
+                    <h2>{{ title }}</h2>
+                    <div class="row">
+                        <div class="card col-12 col-sm-6 col-md-4" v-for="group of groups" v-if="group.milestone < milestone">
+                            <div class="card-block">
+                                <h4 class="card-title">Milestone #{{ group.milestone }}</h4>
+                                <h6 class="card-subtitle">Members:</h6>
+                                <p class="card-text" v-for="member of group.members">{{  uvidtoname(member) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </span>`
         });
     </script>
 </body>
